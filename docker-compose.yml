@@ -64,9 +64,10 @@ services:
       - hapi.fhir.implementationguides.eubase.reloadExisting=true
       - hapi.fhir.implementationguides.eubase.installMode=STORE_AND_INSTALL
 
+
       - hapi.fhir.implementationguides.euext.name=hl7.fhir.eu.extensions.r4
       - hapi.fhir.implementationguides.euext.version=1.3.0
-      - hapi.fhir.implementationguides.euext.packageUrl=https://hl7.eu/fhir/extensions/1.3.0/package.tgz
+      - hapi.fhir.implementationguides.euext.packageUrl=https://hl7.eu/fhir/extensions/1.3.0/hl7.fhir.eu.extensions.r4.tgz
       - hapi.fhir.implementationguides.euext.reloadExisting=true
       - hapi.fhir.implementationguides.euext.installMode=STORE_AND_INSTALL
 
