@@ -1,0 +1,706 @@
+{% assign compr = entry | where: "resource.resourceType", "Composition" | first %}
+{% assign comp = compr.resource %}
+{% assign patr = entry | where: "resource.resourceType", "Patient" | first %}
+{% assign pat = patr.resource %}
+
+{% assign author_lines = "" %}
+{% for auth in comp.author %}
+  {% assign author_entry = entry | where: "fullUrl", auth.reference | first %}
+  {% if author_entry %}
+    {% assign author_res = author_entry.resource %}
+    {% if author_res.resourceType == "PractitionerRole" %}
+      {% assign pr_name = "" %}
+      {% if author_res.practitioner %}
+        {% assign pr_entry = entry | where: "fullUrl", author_res.practitioner.reference | first %}
+        {% if pr_entry %}
+          {% if pr_entry.resource.name[0].text %}
+            {% assign pr_name = pr_entry.resource.name[0].text %}
+          {% elsif pr_entry.resource.name[0].family %}
+            {% if pr_entry.resource.name[0].given %}
+              {% assign pr_name = pr_entry.resource.name[0].given | join: " " | append: " " | append: pr_entry.resource.name[0].family %}
+            {% else %}
+              {% assign pr_name = pr_entry.resource.name[0].family %}
+            {% endif %}
+          {% endif %}
+        {% endif %}
+      {% endif %}
+      {% assign org_name = "" %}
+      {% if author_res.organization %}
+        {% assign org_entry = entry | where: "fullUrl", author_res.organization.reference | first %}
+        {% if org_entry %}
+          {% assign org_name = org_entry.resource.name %}
+        {% endif %}
+      {% endif %}
+      {% assign author_line = pr_name %}
+      {% if org_name != "" and org_name != nil %}
+        {% assign author_line = pr_name | append: " — " | append: org_name %}
+      {% endif %}
+      {% if author_lines == "" %}
+        {% assign author_lines = author_line %}
+      {% else %}
+        {% assign author_lines = author_lines | append: " · " | append: author_line %}
+      {% endif %}
+    {% elsif author_res.resourceType == "Practitioner" %}
+      {% assign pname = "" %}
+      {% if author_res.name[0].text %}
+        {% assign pname = author_res.name[0].text %}
+      {% elsif author_res.name[0].family %}
+        {% if author_res.name[0].given %}
+          {% assign pname = author_res.name[0].given | join: " " | append: " " | append: author_res.name[0].family %}
+        {% else %}
+          {% assign pname = author_res.name[0].family %}
+        {% endif %}
+      {% endif %}
+      {% if author_lines == "" %}
+        {% assign author_lines = pname %}
+      {% else %}
+        {% assign author_lines = author_lines | append: " · " | append: pname %}
+      {% endif %}
+    {% elsif author_res.resourceType == "Organization" %}
+      {% if author_lines == "" %}
+        {% assign author_lines = author_res.name %}
+      {% else %}
+        {% assign author_lines = author_lines | append: " · " | append: author_res.name %}
+      {% endif %}
+    {% else %}
+      {% if auth.display %}
+        {% if author_lines == "" %}
+          {% assign author_lines = auth.display %}
+        {% else %}
+          {% assign author_lines = author_lines | append: " · " | append: auth.display %}
+        {% endif %}
+      {% endif %}
+    {% endif %}
+  {% elsif auth.display %}
+    {% if author_lines == "" %}
+      {% assign author_lines = auth.display %}
+    {% else %}
+      {% assign author_lines = author_lines | append: " · " | append: auth.display %}
+    {% endif %}
+  {% endif %}
+{% endfor %}
+
+{% assign custodian_name = "" %}
+{% if comp.custodian %}
+  {% assign cust_entry = entry | where: "fullUrl", comp.custodian.reference | first %}
+  {% if cust_entry %}
+    {% assign custodian_name = cust_entry.resource.name %}
+  {% endif %}
+{% endif %}
+
+{% assign status_class = "eps-badge-secondary" %}
+{% if comp.status == "final" %}{% assign status_class = "eps-badge-success" %}
+{% elsif comp.status == "registered" or comp.status == "preliminary" %}{% assign status_class = "eps-badge-warning" %}
+{% elsif comp.status == "cancelled" or comp.status == "entered-in-error" %}{% assign status_class = "eps-badge-danger" %}
+{% endif %}
+
+<div class="eps-hero">
+  <div class="d-flex justify-content-between align-items-start">
+    <div>
+      <h4 class="eps-title">{{ comp.title }}</h4>
+      <div class="eps-meta">
+        {% if author_lines != "" %}<span>{{ author_lines }}</span>{% endif %}
+        {% if comp.date %}<span>{{ comp.date }}</span>{% endif %}
+        {% if custodian_name != "" and custodian_name != nil %}<span>{{ custodian_name }}</span>{% endif %}
+      </div>
+      {% if comp.type %}
+        <div class="eps-meta">
+          {% for tc in comp.type.coding %}
+            <span class="eps-badge eps-badge-info">{{ tc.display }}</span>
+          {% endfor %}
+        </div>
+      {% endif %}
+      {% if comp.category %}
+        <div class="eps-meta">
+          {% for cat in comp.category %}
+            {% for cc in cat.coding %}
+              <span class="eps-badge eps-badge-secondary">{{ cc.display }}</span>
+            {% endfor %}
+          {% endfor %}
+        </div>
+      {% endif %}
+    </div>
+    <span class="eps-badge {{ status_class }}">{{ comp.status | upcase }}</span>
+  </div>
+</div>
+
+{% if pat %}
+<div class="eps-patient-strip">
+  {% assign patient_name = "" %}
+  {% if pat.name[0].text %}
+    {% assign patient_name = pat.name[0].text %}
+  {% elsif pat.name[0].family %}
+    {% if pat.name[0].given %}
+      {% assign patient_name = pat.name[0].given | join: " " | append: " " | append: pat.name[0].family %}
+    {% else %}
+      {% assign patient_name = pat.name[0].family %}
+    {% endif %}
+  {% endif %}
+  {% if patient_name != "" and patient_name != nil %}
+    <span class="eps-patient-name">{{ patient_name }}</span>
+  {% endif %}
+  {% if pat.gender %}<span class="eps-patient-detail">{{ pat.gender | slice: 0 | upcase }}</span>{% endif %}
+  {% if pat.birthDate %}<span class="eps-patient-detail">b. {{ pat.birthDate }}</span>{% endif %}
+  {% if pat.identifier %}
+  <div class="eps-identifier-list">
+    {% for pid in pat.identifier %}
+      <span>{{ pid.system | split: "/" | last | upcase }}: <strong>{{ pid.value }}</strong></span>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+
+{% for sec in comp.section %}
+  <div class="eps-section-label">{{ sec.title | default: "Section" }}</div>
+  {% if sec.code %}
+    {% if sec.code.coding[0].display %}
+      <div class="eps-obs-detail mb-2">{{ sec.code.coding[0].display }}</div>
+    {% endif %}
+  {% endif %}
+
+  {% for ent in sec.entry %}
+    {% assign entr = entry | where: "fullUrl", ent.reference | first %}
+    {% if entr %}
+      {% if entr.resource.resourceType == "AllergyIntolerance" %}
+        {% assign ai = entr.resource %}
+        <div class="eps-card-accent {% if ai.clinicalStatus %}{% for c in ai.clinicalStatus.coding %}{% if c.code == 'active' %}danger{% elsif c.code == 'resolved' %}success{% endif %}{% endfor %}{% endif %}">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <strong>Allergy / Intolerance</strong>
+              {% if ai.code %}
+                {% if ai.code.text %}
+                  <span> — {{ ai.code.text }}</span>
+                {% elsif ai.code.coding[0].display %}
+                  <span> — {{ ai.code.coding[0].display }}</span>
+                {% endif %}
+              {% endif %}
+              {% if ai.criticality %}<span class="eps-badge eps-badge-danger ms-1">{{ ai.criticality }}</span>{% endif %}
+            </div>
+            {% if ai.clinicalStatus %}
+              {% assign ai_status_class = "eps-badge-secondary" %}
+              {% for c in ai.clinicalStatus.coding %}
+                {% if c.code == "active" %}{% assign ai_status_class = "eps-badge-danger" %}
+                {% elsif c.code == "resolved" or c.code == "inactive" %}{% assign ai_status_class = "eps-badge-success" %}
+                {% endif %}
+              {% endfor %}
+              <span class="eps-badge {{ ai_status_class }}">{% for c in ai.clinicalStatus.coding %}{{ c.display | default: c.code }}{% endfor %}</span>
+            {% endif %}
+          </div>
+          {% if ai.type %}<div class="eps-obs-detail mt-1">Type: {{ ai.type }}</div>{% endif %}
+          {% if ai.category %}<div class="eps-obs-detail">Category: {% for cat in ai.category %}{{ cat }}{% endfor %}</div>{% endif %}
+          {% if ai.reaction %}
+            {% for r in ai.reaction %}
+              <div class="eps-obs-detail">
+                {% if r.manifestation %}
+                  {% for m in r.manifestation %}
+                    {% if m.concept.text %}{{ m.concept.text }}{% elsif m.concept.coding[0].display %}{{ m.concept.coding[0].display }}{% endif %}
+                  {% endfor %}
+                {% endif %}
+                {% if r.severity %} ({{ r.severity }}){% endif %}
+              </div>
+            {% endfor %}
+          {% endif %}
+          {% if ai.onsetDateTime %}<div class="eps-obs-detail">Onset: {{ ai.onsetDateTime }}</div>{% endif %}
+        </div>
+
+      {% elsif entr.resource.resourceType == "Condition" %}
+        {% assign cond = entr.resource %}
+        <div class="eps-card-accent {% if cond.clinicalStatus %}{% for c in cond.clinicalStatus.coding %}{% if c.code == 'active' %}warning{% elsif c.code == 'resolved' or c.code == 'remission' %}success{% endif %}{% endfor %}{% endif %}">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <strong>Condition</strong>
+              {% if cond.code %}
+                {% if cond.code.text %}
+                  <span> — {{ cond.code.text }}</span>
+                {% elsif cond.code.coding[0].display %}
+                  <span> — {{ cond.code.coding[0].display }}</span>
+                {% endif %}
+              {% endif %}
+            </div>
+            <div>
+              {% if cond.clinicalStatus %}
+                <span class="eps-badge eps-badge-info">{% for c in cond.clinicalStatus.coding %}{{ c.display | default: c.code }}{% endfor %}</span>
+              {% endif %}
+              {% if cond.verificationStatus %}
+                <span class="eps-badge eps-badge-secondary">{% for c in cond.verificationStatus.coding %}{{ c.display | default: c.code }}{% endfor %}</span>
+              {% endif %}
+            </div>
+          </div>
+          {% if cond.category %}
+            <div class="eps-obs-detail mt-1">
+              {% for cat in cond.category %}
+                {% for cc in cat.coding %}<span class="eps-badge eps-badge-secondary">{{ cc.display | default: cc.code }}</span>{% endfor %}
+              {% endfor %}
+            </div>
+          {% endif %}
+          {% if cond.onsetDateTime %}<div class="eps-obs-detail">Onset: {{ cond.onsetDateTime }}</div>{% endif %}
+        </div>
+
+      {% elsif entr.resource.resourceType == "Procedure" %}
+        {% assign proc = entr.resource %}
+        <div class="eps-card-accent primary">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <strong>Procedure</strong>
+              {% if proc.code %}
+                {% if proc.code.text %}
+                  <span> — {{ proc.code.text }}</span>
+                {% elsif proc.code.coding[0].display %}
+                  <span> — {{ proc.code.coding[0].display }}</span>
+                {% endif %}
+              {% endif %}
+            </div>
+            {% if proc.status %}
+              {% assign proc_status_class = "eps-badge-secondary" %}
+              {% if proc.status == "completed" %}{% assign proc_status_class = "eps-badge-success" %}
+              {% elsif proc.status == "in-progress" %}{% assign proc_status_class = "eps-badge-info" %}
+              {% elsif proc.status == "stopped" or proc.status == "not-done" %}{% assign proc_status_class = "eps-badge-danger" %}
+              {% endif %}
+              <span class="eps-badge {{ proc_status_class }}">{{ proc.status }}</span>
+            {% endif %}
+          </div>
+          {% if proc.performedDateTime %}<div class="eps-obs-detail mt-1">{{ proc.performedDateTime }}</div>{% endif %}
+          {% if proc.bodySite %}
+            <div class="eps-obs-detail">Site: {% for bs in proc.bodySite %}{% if bs.text %}{{ bs.text }}{% elsif bs.coding[0].display %}{{ bs.coding[0].display }}{% endif %}{% endfor %}</div>
+          {% endif %}
+        </div>
+
+      {% elsif entr.resource.resourceType == "MedicationStatement" %}
+        {% assign ms = entr.resource %}
+        <div class="eps-card-accent primary">
+          <strong>Medication Statement</strong>
+          {% if ms.medicationReference %}
+            {% assign med_ref = entry | where: "fullUrl", ms.medicationReference.reference | first %}
+            {% if med_ref %}
+              {% if med_ref.resource.code.text %}
+                <span> — {{ med_ref.resource.code.text }}</span>
+              {% elsif med_ref.resource.code.coding[0].display %}
+                <span> — {{ med_ref.resource.code.coding[0].display }}</span>
+              {% endif %}
+            {% elsif ms.medicationReference.display %}
+              <span> — {{ ms.medicationReference.display }}</span>
+            {% endif %}
+          {% elsif ms.medicationCodeableConcept %}
+            {% if ms.medicationCodeableConcept.text %}
+              <span> — {{ ms.medicationCodeableConcept.text }}</span>
+            {% elsif ms.medicationCodeableConcept.coding[0].display %}
+              <span> — {{ ms.medicationCodeableConcept.coding[0].display }}</span>
+            {% endif %}
+          {% endif %}
+          {% if ms.status %}
+            {% assign ms_status_class = "eps-badge-secondary" %}
+            {% if ms.status == "active" %}{% assign ms_status_class = "eps-badge-success" %}
+            {% elsif ms.status == "completed" %}{% assign ms_status_class = "eps-badge-info" %}
+            {% elsif ms.status == "stopped" or ms.status == "not-taken" %}{% assign ms_status_class = "eps-badge-danger" %}
+            {% endif %}
+            <span class="eps-badge {{ ms_status_class }}">{{ ms.status }}</span>
+          {% endif %}
+          {% if ms.effectiveDateTime %}<div class="eps-obs-detail mt-1">{{ ms.effectiveDateTime }}</div>{% endif %}
+          {% if ms.dosage %}
+            {% for d in ms.dosage %}
+              {% if d.text %}<div class="eps-obs-detail">Dosage: {{ d.text }}</div>{% endif %}
+            {% endfor %}
+          {% endif %}
+          {% if ms.reasonCode %}
+            <div class="eps-obs-detail">Reason: {% for rc in ms.reasonCode %}{% if rc.text %}{{ rc.text }}{% elsif rc.coding[0].display %}{{ rc.coding[0].display }}{% endif %}{% endfor %}</div>
+          {% endif %}
+        </div>
+
+      {% elsif entr.resource.resourceType == "MedicationRequest" %}
+        {% assign mr = entr.resource %}
+        <div class="eps-card-accent info">
+          <strong>Medication Request</strong>
+          {% if mr.medicationReference %}
+            {% assign med_ref = entry | where: "fullUrl", mr.medicationReference.reference | first %}
+            {% if med_ref %}
+              {% if med_ref.resource.code.text %}
+                <span> — {{ med_ref.resource.code.text }}</span>
+              {% elsif med_ref.resource.code.coding[0].display %}
+                <span> — {{ med_ref.resource.code.coding[0].display }}</span>
+              {% endif %}
+            {% elsif mr.medicationReference.display %}
+              <span> — {{ mr.medicationReference.display }}</span>
+            {% endif %}
+          {% elsif mr.medicationCodeableConcept %}
+            {% if mr.medicationCodeableConcept.text %}
+              <span> — {{ mr.medicationCodeableConcept.text }}</span>
+            {% elsif mr.medicationCodeableConcept.coding[0].display %}
+              <span> — {{ mr.medicationCodeableConcept.coding[0].display }}</span>
+            {% endif %}
+          {% endif %}
+          {% if mr.status %}<span class="eps-badge eps-badge-secondary ms-1">{{ mr.status }}</span>{% endif %}
+          {% if mr.intent %}<span class="eps-badge eps-badge-info">{{ mr.intent }}</span>{% endif %}
+          {% if mr.dosageInstruction %}
+            {% for d in mr.dosageInstruction %}
+              {% if d.text %}<div class="eps-obs-detail mt-1">Dosage: {{ d.text }}</div>{% endif %}
+            {% endfor %}
+          {% endif %}
+          {% if mr.dispenseRequest %}
+            {% if mr.dispenseRequest.quantity %}<div class="eps-obs-detail">Quantity: {{ mr.dispenseRequest.quantity.value }} {{ mr.dispenseRequest.quantity.unit }}</div>{% endif %}
+          {% endif %}
+        </div>
+
+      {% elsif entr.resource.resourceType == "MedicationDispense" %}
+        {% assign md = entr.resource %}
+        <div class="eps-card-accent info">
+          <strong>Medication Dispense</strong>
+          {% if md.medicationReference %}
+            {% assign med_ref = entry | where: "fullUrl", md.medicationReference.reference | first %}
+            {% if med_ref %}
+              {% if med_ref.resource.code.text %}
+                <span> — {{ med_ref.resource.code.text }}</span>
+              {% elsif med_ref.resource.code.coding[0].display %}
+                <span> — {{ med_ref.resource.code.coding[0].display }}</span>
+              {% endif %}
+            {% elsif md.medicationReference.display %}
+              <span> — {{ md.medicationReference.display }}</span>
+            {% endif %}
+          {% elsif md.medicationCodeableConcept %}
+            {% if md.medicationCodeableConcept.text %}
+              <span> — {{ md.medicationCodeableConcept.text }}</span>
+            {% elsif md.medicationCodeableConcept.coding[0].display %}
+              <span> — {{ md.medicationCodeableConcept.coding[0].display }}</span>
+            {% endif %}
+          {% endif %}
+          {% if md.status %}<span class="eps-badge eps-badge-secondary ms-1">{{ md.status }}</span>{% endif %}
+          {% if md.quantity %}<div class="eps-obs-detail mt-1">Quantity: {{ md.quantity.value }} {{ md.quantity.unit }}</div>{% endif %}
+          {% if md.whenHandedOver %}<div class="eps-obs-detail">Handed over: {{ md.whenHandedOver }}</div>{% endif %}
+          {% if md.wasSubstituted %}<div class="eps-obs-detail">Substituted: Yes</div>{% endif %}
+        </div>
+
+      {% elsif entr.resource.resourceType == "Observation" %}
+          {% render "./templates/epsobs.liquid", entr: entr, entry: entry %}
+        {% if entr.resource.hasMember %}
+          {% for memb in entr.resource.hasMember %}
+            {% assign subentr = entry | where: "fullUrl", memb.reference | first %}
+            {% if subentr %}
+              <div class="eps-obs-nested">
+                  {% render "./templates/epsobs.liquid", entr: subentr, entry: entry %}
+                {% if subentr.resource.hasMember %}
+                  {% for submemb in subentr.resource.hasMember %}
+                    {% assign subsubentr = entry | where: "fullUrl", submemb.reference | first %}
+                    {% if subsubentr %}
+                      <div class="eps-obs-nested">
+                          {% render "./templates/epsobs.liquid", entr: subsubentr, entry: entry %}
+                        {% if subsubentr.resource.hasMember %}
+                          {% for subsubmemb in subsubentr.resource.hasMember %}
+                            {% assign lvl3 = entry | where: "fullUrl", subsubmemb.reference | first %}
+                            {% if lvl3 %}
+                              <div class="eps-obs-nested">
+                                  {% render "./templates/epsobs.liquid", entr: lvl3, entry: entry %}
+                              </div>
+                            {% endif %}
+                          {% endfor %}
+                        {% endif %}
+                      </div>
+                    {% endif %}
+                  {% endfor %}
+                {% endif %}
+              </div>
+            {% endif %}
+          {% endfor %}
+        {% endif %}
+
+      {% elsif entr.resource.resourceType == "CarePlan" %}
+        {% assign cp = entr.resource %}
+        <div class="eps-card">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <strong>Care Plan</strong>
+              {% if cp.description %}<span> — {{ cp.description }}</span>{% endif %}
+            </div>
+            <div>
+              {% if cp.status %}<span class="eps-badge eps-badge-secondary">{{ cp.status }}</span>{% endif %}
+              {% if cp.intent %}<span class="eps-badge eps-badge-info">{{ cp.intent }}</span>{% endif %}
+            </div>
+          </div>
+          {% if cp.category %}
+            <div class="eps-obs-detail mt-1">
+              {% for cat in cp.category %}
+                {% for cc in cat.coding %}<span class="eps-badge eps-badge-secondary">{{ cc.display | default: cc.code }}</span>{% endfor %}
+              {% endfor %}
+            </div>
+          {% endif %}
+          {% if cp.period %}
+            <div class="eps-obs-detail">Period: {{ cp.period.start | default: "?" }} — {{ cp.period.end | default: "?" }}</div>
+          {% endif %}
+        </div>
+
+      {% elsif entr.resource.resourceType == "Flag" %}
+        {% assign fl = entr.resource %}
+        <div class="eps-card-accent warning">
+          <strong>Flag</strong>
+          {% if fl.code %}
+            {% if fl.code.text %}
+              <span> — {{ fl.code.text }}</span>
+            {% elsif fl.code.coding[0].display %}
+              <span> — {{ fl.code.coding[0].display }}</span>
+            {% endif %}
+          {% endif %}
+          {% if fl.status %}<span class="eps-badge eps-badge-secondary ms-1">{{ fl.status }}</span>{% endif %}
+        </div>
+
+      {% elsif entr.resource.resourceType == "Immunization" %}
+        {% assign imm = entr.resource %}
+        <div class="eps-card-accent success">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <strong>Immunization</strong>
+              {% if imm.vaccineCode %}
+                {% if imm.vaccineCode.text %}
+                  <span> — {{ imm.vaccineCode.text }}</span>
+                {% elsif imm.vaccineCode.coding[0].display %}
+                  <span> — {{ imm.vaccineCode.coding[0].display }}</span>
+                {% endif %}
+              {% endif %}
+            </div>
+            {% if imm.status %}
+              {% assign imm_status_class = "eps-badge-secondary" %}
+              {% if imm.status == "completed" %}{% assign imm_status_class = "eps-badge-success" %}
+              {% elsif imm.status == "not-done" %}{% assign imm_status_class = "eps-badge-danger" %}
+              {% endif %}
+              <span class="eps-badge {{ imm_status_class }}">{{ imm.status }}</span>
+            {% endif %}
+          </div>
+          {% if imm.occurrenceDateTime %}<div class="eps-obs-detail mt-1">{{ imm.occurrenceDateTime }}</div>{% endif %}
+        </div>
+
+      {% elsif entr.resource.resourceType == "Device" or entr.resource.resourceType == "DeviceUseStatement" %}
+        {% assign dev = entr.resource %}
+        <div class="eps-card">
+          <strong>{{ entr.resource.resourceType }}</strong>
+          {% if dev.type %}
+            {% if dev.type.text %}
+              <span> — {{ dev.type.text }}</span>
+            {% elsif dev.type.coding[0].display %}
+              <span> — {{ dev.type.coding[0].display }}</span>
+            {% endif %}
+          {% endif %}
+          {% if dev.status or dev.status == nil and dev.defined != nil %}
+            {% if dev.status %}<span class="eps-badge eps-badge-secondary ms-1">{{ dev.status }}</span>{% endif %}
+          {% endif %}
+        </div>
+
+      {% elsif entr.resource.resourceType == "ServiceRequest" %}
+        {% assign sr = entr.resource %}
+        <div class="eps-support-card">
+          <div class="eps-support-label">Service Request</div>
+          {% if sr.code %}
+            {% if sr.code.text %}
+              <div class="eps-support-value">{{ sr.code.text }}</div>
+            {% elsif sr.code.coding[0].display %}
+              <div class="eps-support-value">{{ sr.code.coding[0].display }}</div>
+            {% endif %}
+          {% endif %}
+          {% if sr.status %}<span class="eps-badge eps-badge-secondary me-1">{{ sr.status }}</span>{% endif %}
+          {% if sr.intent %}<span class="eps-badge eps-badge-info">{{ sr.intent }}</span>{% endif %}
+        </div>
+
+      {% endif %}
+    {% endif %}
+  {% endfor %}
+
+  {% for subsec in sec.section %}
+    <div class="eps-section-label" style="margin-left: 24px;">{{ subsec.title | default: "Sub-section" }}</div>
+    {% if subsec.code %}
+      {% if subsec.code.coding[0].display %}
+        <div class="eps-obs-detail mb-2" style="margin-left: 24px;">{{ subsec.code.coding[0].display }}</div>
+      {% endif %}
+    {% endif %}
+    {% for ent in subsec.entry %}
+      {% assign entr = entry | where: "fullUrl", ent.reference | first %}
+      {% if entr %}
+        {% if entr.resource.resourceType == "Observation" %}
+          <div class="eps-obs-nested">
+              {% render "./templates/epsobs.liquid", entr: entr, entry: entry %}
+            {% if entr.resource.hasMember %}
+              {% for memb in entr.resource.hasMember %}
+                {% assign subentr = entry | where: "fullUrl", memb.reference | first %}
+                {% if subentr %}
+                  <div class="eps-obs-nested">
+                      {% render "./templates/epsobs.liquid", entr: subentr, entry: entry %}
+                    {% if subentr.resource.hasMember %}
+                      {% for submemb in subentr.resource.hasMember %}
+                        {% assign subsubentr = entry | where: "fullUrl", submemb.reference | first %}
+                        {% if subsubentr %}
+                          <div class="eps-obs-nested">
+                              {% render "./templates/epsobs.liquid", entr: subsubentr, entry: entry %}
+                          </div>
+                        {% endif %}
+                      {% endfor %}
+                    {% endif %}
+                  </div>
+                {% endif %}
+              {% endfor %}
+            {% endif %}
+          </div>
+        {% elsif entr.resource.resourceType == "ServiceRequest" %}
+          <div style="margin-left: 24px;">
+            {% assign sr = entr.resource %}
+            <div class="eps-support-card">
+              <div class="eps-support-label">Service Request</div>
+              {% if sr.code %}
+                {% if sr.code.text %}
+                  <div class="eps-support-value">{{ sr.code.text }}</div>
+                {% elsif sr.code.coding[0].display %}
+                  <div class="eps-support-value">{{ sr.code.coding[0].display }}</div>
+                {% endif %}
+              {% endif %}
+              {% if sr.status %}<span class="eps-badge eps-badge-secondary me-1">{{ sr.status }}</span>{% endif %}
+              {% if sr.intent %}<span class="eps-badge eps-badge-info">{{ sr.intent }}</span>{% endif %}
+            </div>
+          </div>
+        {% elsif entr.resource.resourceType == "AllergyIntolerance" %}
+          {% assign ai = entr.resource %}
+          <div class="eps-card-accent {% if ai.clinicalStatus %}{% for c in ai.clinicalStatus.coding %}{% if c.code == 'active' %}danger{% elsif c.code == 'resolved' %}success{% endif %}{% endfor %}{% endif %}" style="margin-left: 24px;">
+            <strong>Allergy / Intolerance</strong>
+            {% if ai.code %}
+              {% if ai.code.text %}
+                <span> — {{ ai.code.text }}</span>
+              {% elsif ai.code.coding[0].display %}
+                <span> — {{ ai.code.coding[0].display }}</span>
+              {% endif %}
+            {% endif %}
+          </div>
+        {% elsif entr.resource.resourceType == "Condition" %}
+          {% assign cond = entr.resource %}
+          <div class="eps-card-accent warning" style="margin-left: 24px;">
+            <strong>Condition</strong>
+            {% if cond.code %}
+              {% if cond.code.text %}
+                <span> — {{ cond.code.text }}</span>
+              {% elsif cond.code.coding[0].display %}
+                <span> — {{ cond.code.coding[0].display }}</span>
+              {% endif %}
+            {% endif %}
+          </div>
+        {% elsif entr.resource.resourceType == "MedicationStatement" %}
+          {% assign ms = entr.resource %}
+          <div class="eps-card-accent primary" style="margin-left: 24px;">
+            <strong>Medication Statement</strong>
+            {% if ms.medicationCodeableConcept %}
+              {% if ms.medicationCodeableConcept.text %}
+                <span> — {{ ms.medicationCodeableConcept.text }}</span>
+              {% elsif ms.medicationCodeableConcept.coding[0].display %}
+                <span> — {{ ms.medicationCodeableConcept.coding[0].display }}</span>
+              {% endif %}
+            {% elsif ms.medicationReference and ms.medicationReference.display %}
+              <span> — {{ ms.medicationReference.display }}</span>
+            {% endif %}
+          </div>
+        {% elsif entr.resource.resourceType == "Procedure" %}
+          {% assign proc = entr.resource %}
+          <div class="eps-card-accent primary" style="margin-left: 24px;">
+            <strong>Procedure</strong>
+            {% if proc.code %}
+              {% if proc.code.text %}
+                <span> — {{ proc.code.text }}</span>
+              {% elsif proc.code.coding[0].display %}
+                <span> — {{ proc.code.coding[0].display }}</span>
+              {% endif %}
+            {% endif %}
+          </div>
+        {% endif %}
+      {% endif %}
+    {% endfor %}
+  {% endfor %}
+{% endfor %}
+
+{% assign orgs = entry | where: "resource.resourceType", "Organization" %}
+{% assign encounters = entry | where: "resource.resourceType", "Encounter" %}
+{% assign coverage = entry | where: "resource.resourceType", "Coverage" %}
+{% assign prroles = entry | where: "resource.resourceType", "PractitionerRole" %}
+
+{% if orgs.size > 0 or encounters.size > 0 or coverage.size > 0 or prroles.size > 0 %}
+<div class="eps-section-label">Supporting Resources</div>
+
+{% for org_e in orgs %}
+  {% assign org = org_e.resource %}
+  <div class="eps-support-card">
+    <div class="eps-support-label">Organization</div>
+    <div class="eps-support-value">{{ org.name | default: "Unknown" }}</div>
+    {% if org.type %}
+      {% for ot in org.type %}
+        {% for otc in ot.coding %}
+          <span class="eps-badge eps-badge-secondary">{{ otc.display }}</span>
+        {% endfor %}
+      {% endfor %}
+    {% endif %}
+  </div>
+{% endfor %}
+
+{% for prrole_e in prroles %}
+  {% assign prrole = prrole_e.resource %}
+  {% assign pr_name = "" %}
+  {% if prrole.practitioner %}
+    {% assign pr_entry = entry | where: "fullUrl", prrole.practitioner.reference | first %}
+    {% if pr_entry %}
+      {% if pr_entry.resource.name[0].text %}
+        {% assign pr_name = pr_entry.resource.name[0].text %}
+      {% elsif pr_entry.resource.name[0].family %}
+        {% if pr_entry.resource.name[0].given %}
+          {% assign pr_name = pr_entry.resource.name[0].given | join: " " | append: " " | append: pr_entry.resource.name[0].family %}
+        {% else %}
+          {% assign pr_name = pr_entry.resource.name[0].family %}
+        {% endif %}
+      {% endif %}
+    {% elsif prrole.practitioner.display %}
+      {% assign pr_name = prrole.practitioner.display %}
+    {% endif %}
+  {% endif %}
+  {% assign org_name = "" %}
+  {% if prrole.organization %}
+    {% assign pr_org_entry = entry | where: "fullUrl", prrole.organization.reference | first %}
+    {% if pr_org_entry %}
+      {% assign org_name = pr_org_entry.resource.name %}
+    {% elsif prrole.organization.display %}
+      {% assign org_name = prrole.organization.display %}
+    {% endif %}
+  {% endif %}
+  <div class="eps-support-card">
+    <div class="eps-support-label">PractitionerRole</div>
+    <div class="eps-support-value">
+      {{ pr_name }}
+      {% if org_name != "" and org_name != nil %} — {{ org_name }}{% endif %}
+    </div>
+    {% if prrole.code %}
+      {% for code in prrole.code %}
+        {% for cc in code.coding %}
+          <span class="eps-badge eps-badge-secondary">{{ cc.display | default: cc.code }}</span>
+        {% endfor %}
+      {% endfor %}
+    {% endif %}
+  </div>
+{% endfor %}
+
+{% for enc_e in encounters %}
+  {% assign enc = enc_e.resource %}
+  <div class="eps-support-card">
+    <div class="eps-support-label">Encounter</div>
+    <div class="eps-support-value">
+      {{ enc.status | default: "" }}
+      {% if enc.class %}
+        {% for cl in enc.class %}
+          <span class="eps-badge eps-badge-secondary">{{ cl.display | default: cl.code }}</span>
+        {% endfor %}
+      {% endif %}
+    </div>
+  </div>
+{% endfor %}
+
+{% for cov_e in coverage %}
+  {% assign cov = cov_e.resource %}
+  <div class="eps-support-card">
+    <div class="eps-support-label">Coverage</div>
+    <div class="eps-support-value">
+      {{ cov.status | default: "" }}
+      {% if cov.type %}
+        {% for ctc in cov.type.coding %}
+          <span class="eps-badge eps-badge-info">{{ ctc.display }}</span>
+        {% endfor %}
+      {% endif %}
+    </div>
+  </div>
+{% endfor %}
+{% endif %}

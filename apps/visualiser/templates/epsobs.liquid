@@ -10,31 +10,31 @@
   {% endif %}
 {% endif %}
 
-<div class="lab-obs-card {{ interp_class }}">
-<div class="lab-obs-header">
-  <span class="lab-obs-code">
+<div class="eps-obs-card {{ interp_class }}">
+<div class="eps-obs-header">
+  <span class="eps-obs-code">
     {% if entr.resource.code.text %}
       {{ entr.resource.code.text }}
     {% elsif entr.resource.code.coding[0].display %}
       {{ entr.resource.code.coding[0].display }}
     {% endif %}
     {% if entr.resource.category %}
-      <span class="lab-badge lab-badge-secondary ms-1">{{ entr.resource.category[0].coding[0].code }}</span>
+      <span class="eps-badge eps-badge-secondary ms-1">{{ entr.resource.category[0].coding[0].code }}</span>
     {% endif %}
   </span>
   {% if entr.resource.interpretation %}
-    <span class="lab-badge {% if interp_class == 'interp-normal' %}lab-badge-success{% elsif interp_class == 'interp-high' or interp_class == 'interp-low' %}lab-badge-danger{% elsif interp_class == 'interp-abnormal' %}lab-badge-warning{% elsif interp_class == 'interp-susceptible' %}lab-badge-success{% elsif interp_class == 'interp-resistant' %}lab-badge-danger{% else %}lab-badge-info{% endif %}">
+    <span class="eps-badge {% if interp_class == 'interp-normal' %}eps-badge-success{% elsif interp_class == 'interp-high' or interp_class == 'interp-low' %}eps-badge-danger{% elsif interp_class == 'interp-abnormal' %}eps-badge-warning{% elsif interp_class == 'interp-susceptible' %}eps-badge-success{% elsif interp_class == 'interp-resistant' %}eps-badge-danger{% else %}eps-badge-info{% endif %}">
       {{ entr.resource.interpretation[0].coding[0].display }}
     </span>
   {% endif %}
 </div>
 
 {% if entr.resource.valueQuantity %}
-  <div class="lab-obs-value">
+  <div class="eps-obs-value">
     {% if entr.resource.valueQuantity.comparator %}{{ entr.resource.valueQuantity.comparator }}{% endif %}{{ entr.resource.valueQuantity.value }} {{ entr.resource.valueQuantity.unit }}
   </div>
 {% elsif entr.resource.valueCodeableConcept %}
-  <div class="lab-obs-value">
+  <div class="eps-obs-value">
     {% if entr.resource.valueCodeableConcept.text %}
       {{ entr.resource.valueCodeableConcept.text }}
     {% elsif entr.resource.valueCodeableConcept.coding[0].display %}
@@ -42,15 +42,15 @@
     {% endif %}
   </div>
 {% elsif entr.resource.valueString %}
-  <div class="lab-obs-value">{{ entr.resource.valueString }}</div>
+  <div class="eps-obs-value">{{ entr.resource.valueString }}</div>
 {% elsif entr.resource.valueBoolean %}
-  <div class="lab-obs-value">{{ entr.resource.valueBoolean }}</div>
+  <div class="eps-obs-value">{{ entr.resource.valueBoolean }}</div>
 {% elsif entr.resource.valueInteger %}
-  <div class="lab-obs-value">{{ entr.resource.valueInteger }}</div>
+  <div class="eps-obs-value">{{ entr.resource.valueInteger }}</div>
 {% endif %}
 
 {% if entr.resource.component %}
-  <table class="lab-component-table">
+  <table class="eps-component-table">
     {% for comp in entr.resource.component %}
       <tr>
         <td>
@@ -79,7 +79,7 @@
 {% endif %}
 
 {% if entr.resource.referenceRange %}
-  <div class="lab-obs-detail">
+  <div class="eps-obs-detail">
     Ref:
     {% for rr in entr.resource.referenceRange %}
       {% if rr.low and rr.high %}
@@ -95,14 +95,14 @@
 {% endif %}
 
 {% if entr.resource.effectiveDateTime %}
-  <div class="lab-obs-detail">{{ entr.resource.effectiveDateTime }}</div>
+  <div class="eps-obs-detail">{{ entr.resource.effectiveDateTime }}</div>
 {% endif %}
 
 {% if entr.resource.specimen %}
   {% assign spec = entry | where: "fullUrl", entr.resource.specimen.reference | first %}
   {% if spec %}
     {% assign sp = spec.resource %}
-    <div class="lab-obs-footer">
+    <div class="eps-obs-footer">
       Specimen:
       {% if sp.type %}
         {% if sp.type.coding[0].display %}{{ sp.type.coding[0].display }}{% endif %}

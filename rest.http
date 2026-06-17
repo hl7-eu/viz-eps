@@ -1,6 +1,6 @@
-@host = http://localhost:8080/fhir
+@host = http://localhost:8279/eps/fhir
 
-@folder = unicom
+@folder = eps
 
 ### Post fixed StructureMap which is not integrated in the implementation guide 
 GET {{host}}/metadata

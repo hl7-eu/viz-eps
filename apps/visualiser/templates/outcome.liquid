@@ -40,10 +40,10 @@
           <div id="collapseErrors" class="accordion-collapse collapse" aria-labelledby="headingErrors" data-bs-parent="#collapseDetails">
             <div class="accordion-body">
               {% for error in errors %}
-              <div class="lab-issue-card issue-error">
-                <span class="lab-issue-code">{{ error.details.coding[0].code }}</span>
-                <span class="lab-issue-diagnostics">{{ error.diagnostics }}</span>
-                {% if error.location %}<div class="lab-issue-location">{{ error.location }}</div>{% endif %}
+              <div class="eps-issue-card issue-error">
+                <span class="eps-issue-code">{{ error.details.coding[0].code }}</span>
+                <span class="eps-issue-diagnostics">{{ error.diagnostics }}</span>
+                {% if error.location %}<div class="eps-issue-location">{{ error.location }}</div>{% endif %}
               </div>
               {% endfor %}
             </div>
@@ -61,10 +61,10 @@
           <div id="collapseWarnings" class="accordion-collapse collapse" aria-labelledby="headingWarnings" data-bs-parent="#collapseDetails">
             <div class="accordion-body">
               {% for warning in warnings %}
-              <div class="lab-issue-card issue-warning">
-                <span class="lab-issue-code">{{ warning.details.coding[0].code }}</span>
-                <span class="lab-issue-diagnostics">{{ warning.diagnostics }}</span>
-                {% if warning.location %}<div class="lab-issue-location">{{ warning.location }}</div>{% endif %}
+              <div class="eps-issue-card issue-warning">
+                <span class="eps-issue-code">{{ warning.details.coding[0].code }}</span>
+                <span class="eps-issue-diagnostics">{{ warning.diagnostics }}</span>
+                {% if warning.location %}<div class="eps-issue-location">{{ warning.location }}</div>{% endif %}
               </div>
               {% endfor %}
             </div>
@@ -82,10 +82,10 @@
           <div id="collapseInformations" class="accordion-collapse collapse" aria-labelledby="headingInformations" data-bs-parent="#collapseDetails">
             <div class="accordion-body">
               {% for info in informations %}
-              <div class="lab-issue-card issue-information">
-                <span class="lab-issue-code">{{ info.details.coding[0].code }}</span>
-                <span class="lab-issue-diagnostics">{{ info.diagnostics }}</span>
-                {% if info.location %}<div class="lab-issue-location">{{ info.location }}</div>{% endif %}
+              <div class="eps-issue-card issue-information">
+                <span class="eps-issue-code">{{ info.details.coding[0].code }}</span>
+                <span class="eps-issue-diagnostics">{{ info.diagnostics }}</span>
+                {% if info.location %}<div class="eps-issue-location">{{ info.location }}</div>{% endif %}
               </div>
               {% endfor %}
             </div>

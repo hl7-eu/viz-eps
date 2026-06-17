@@ -2,9 +2,9 @@
   "templates": [
     {
       "resourceType": "Bundle",
-      "template": "bundlelab.liquid",
+      "template": "bundleeps.liquid",
       "query": "",
-      "querydescription": "Lab report Bundle viewer — renders Composition, Patient, DiagnosticReport, Observation, Specimen, Organization, ServiceRequest, and other EU Lab resources"
+      "querydescription": "EPS Bundle viewer — renders Composition, Patient, AllergyIntolerance, Condition, Procedure, MedicationStatement, Observation, and other EU EPS resources"
     },
     {
       "resourceType": "OperationOutcome",

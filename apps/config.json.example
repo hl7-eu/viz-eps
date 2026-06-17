@@ -1,4 +1,4 @@
 {
-    "ig_url": "https://build.fhir.org/ig/hl7-eu/laboratory/", 
-    "server_url": "https://sandbox.hl7europe.eu/laboratory/fhir"
+    "ig_url": "https://hl7.eu/fhir/eps/", 
+    "server_url": "https://sandbox.hl7europe.eu/eps/fhir"
 }
