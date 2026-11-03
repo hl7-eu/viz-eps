@@ -162,6 +162,7 @@
   {% for ent in sec.entry %}
     {% assign entr = entry | where: "fullUrl", ent.reference | first %}
     {% if entr %}
+    <div class="ps-entry" data-ps-ref="{{ entr.fullUrl }}">
       {% if entr.resource.resourceType == "AllergyIntolerance" %}
         {% assign ai = entr.resource %}
         <div class="eps-card-accent {% if ai.clinicalStatus %}{% for c in ai.clinicalStatus.coding %}{% if c.code == 'active' %}danger{% elsif c.code == 'resolved' %}success{% endif %}{% endfor %}{% endif %}">
@@ -498,6 +499,7 @@
         </div>
 
       {% endif %}
+    </div>
     {% endif %}
   {% endfor %}
 
@@ -511,6 +513,7 @@
     {% for ent in subsec.entry %}
       {% assign entr = entry | where: "fullUrl", ent.reference | first %}
       {% if entr %}
+      <div class="ps-entry" data-ps-ref="{{ entr.fullUrl }}">
         {% if entr.resource.resourceType == "Observation" %}
           <div class="eps-obs-nested">
               {% render "./templates/epsobs.liquid", entr: entr, entry: entry %}
@@ -602,6 +605,7 @@
             {% endif %}
           </div>
         {% endif %}
+      </div>
       {% endif %}
     {% endfor %}
   {% endfor %}

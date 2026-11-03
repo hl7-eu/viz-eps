@@ -18,7 +18,7 @@ viz-eps/
 │   ├── server_mgmt.html   # Server management
 │   ├── header.html         # Shared header (SSI include)
 │   ├── visualiser/         # FHIR resource visualiser using LiquidJS templates
-│   │   ├── index.html      # Entry point — takes ?url= param, renders via LiquidJS
+│   │   ├── index.html      # Entry point — takes ?url= param, or a pasted, opened or dropped Bundle (JSON or XML)
 │   │   ├── bundle.html     # Bundle-specific viewer
 │   │   ├── outcome.html    # OperationOutcome viewer
 │   │   ├── templates/      # LiquidJS templates (*.liquid)
@@ -28,9 +28,12 @@ viz-eps/
 │   │   │   ├── dump.liquid
 │   │   │   └── debug.liquid
 │   │   ├── templates.json  # Maps resourceType → template + FHIR query
+│   │   ├── fhir-r4-elements.json # Element types for the XML to JSON conversion (tools/build-fhir-r4-elements.py)
+│   │   ├── assets/js/      # eps-viewer.js (rendering, narrative, references), fhir-xml.js (XML to JSON)
 │   │   └── resources/      # Sample FHIR Bundles (local test data)
 │   ├── assets/             # Shared CSS/JS (Bootstrap, jQuery, LiquidJS)
 │   └── config.json.example # Example: { "ig_url": "...", "server_url": "..." }
+├── tools/                  # build-fhir-r4-elements.py: regenerates fhir-r4-elements.json from hl7.fhir.r4.core
 └── rest.http               # IntelliJ HTTP client requests
 ```
 
